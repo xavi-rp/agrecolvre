@@ -1,0 +1,29 @@
+
+
+# A: Artificial land
+# B00: Cropland
+#   B10:Cereals
+#   B20: Root crops
+#   B30: Non-permanent industrial crops
+#   B40: Dry pulses, vegetables and flowers
+#   B50: Fodder crops
+#   B70: Permanent crops (fruit trees) 
+#   B80: Other permanent crops
+# C00: Woodland
+#   C10: Broadleaved woodland
+#   C20: Coniferous woodland
+#     C21 Spruce dominated coniferous woodland
+#     C22 Pine dominated coniferous woodland
+#     C23 Other coniferous woodland
+#   C30: Mixed woodlands
+#     C31 Spruce dominated mixed woodland
+#     C32 Pine dominated mixed woodland
+#     C33 Other mixed woodland
+# D: Shrubland
+# E00: Grassland
+#   E10: Grassland with sparse tree/shrub cover
+#   E20: Grassland without tree/shrub cover
+#   E30: Spontanously re-vegetated surfaces
+# F: Bareland
+# G: Water
+# H: Wetlands
