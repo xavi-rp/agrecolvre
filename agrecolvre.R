@@ -13,6 +13,12 @@
 
 library(tidyverse)
 library(readxl)
+library(flextable) 
+library(officer) 
+library(webshot2)
+
+
+setwd("/Users/xavi_rp/Documents/LifeWatchERIC/AgroServ/AgroServ_1stCall_USC")
 
 
 ### step 1: Read in LUCAS-soil data ####
@@ -25,6 +31,9 @@ LucasS2009 <- read_excel(paste0(LucasS2009_dir, "LUCAS_TOPSOIL_v1.xlsx"))
 
 LucasC2009_dir <- "/Users/xavi_rp/Documents/LifeWatchERIC/LUCAS_CORE_Data/"
 LucasC2009 <- read.csv(paste0(LucasC2009_dir, "EU_2009_20200213.CSV.csv"), header = TRUE)
+
+LucasC2018_dir <- LucasC2009_dir
+LucasC2018 <- read.csv(paste0(LucasC2009_dir, "EU_2018_20200213.csv"), header = TRUE)
 
 
 
@@ -50,6 +59,22 @@ sort(unique(LucasC2009$LC2))  # e.g. "A13",  "B11", etc
 
 LucasC2009 <- LucasC2009 %>%
   mutate(LC1 = str_trim(LC1, side = "right"))
+
+
+## LUCAS core 2018 
+
+head(LucasC2018)
+nrow(LucasC2018)    # 337855
+ncol(LucasC2018)    # 97
+names(LucasC2018)
+
+sort(unique(LucasC2018$LU1))  # e.g. "U111", "U112", etc
+sort(unique(LucasC2018$LC1))  # e.g. "A11",  "A12", etc     # this is the one to check for changes 2009-2018
+sum(LucasC2018$LC1 == "8")    # there are also "" (1 row) and "8" (37 rows) 
+
+# removing them
+LucasC2018 <- LucasC2018 %>%
+  filter(!LC1 %in% c("", "8"))
 
 
 
@@ -89,7 +114,10 @@ head(sort(unique(LucasS2018$LU1_Desc)))  # e.g. "Agriculture (excluding fallow l
 
 
 
-### step 3: Select unchanged LUCAS points ####
+### step 3: Analysing number of sampled points per regions ####
+#### Selecting unchanged LUCAS points ####
+
+
 ## Select those points with the same LU between 2009 and 2018
 
 sort(unique(LucasC2009$LC1))  # e.g. "A11",  "A12", etc     # this is the one to check for changes 2009-2018
@@ -140,7 +168,7 @@ View(LucasS2018_sameLU)
 
 
 
-#### Analysing number of points per regions ####
+#### Summary of sampled points per regions ####
 
 #LucasS2018_sameLU %>%
 #  filter(apply(LucasS2018_sameLU, 1, function(row) any(grepl("FRD", row))))
@@ -181,9 +209,34 @@ summary_table1 <- LucasS2018_sameLU %>%
   ) %>% 
   t() %>% 
   as.data.frame() %>% 
-  rename("LUCAS_TopSoil" = V1)
+  rename("LUCAS_TopSoil_UnchangedLU" = V1)
 
 summary_table1
+
+
+summary_table1 <- LucasS2018 %>%
+  summarise(
+    PT16 = sum(conditions[[1]](LucasS2018)),
+    ES11 = sum(conditions[[2]](LucasS2018)),
+    ES30 = sum(conditions[[3]](LucasS2018)),
+    FRD = sum(conditions[[4]](LucasS2018)),
+    NL = sum(conditions[[5]](LucasS2018)),
+    FI = sum(conditions[[6]](LucasS2018)),
+    DE40 = sum(conditions[[7]](LucasS2018)),
+    SK = sum(conditions[[8]](LucasS2018)),
+    EL = sum(conditions[[9]](LucasS2018)),
+    ITI1 = sum(conditions[[10]](LucasS2018))
+  ) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  rename("LUCAS_TopSoil" = V1) %>%
+  cbind(summary_table1)
+
+summary_table1
+
+
+
+# by LC
 desired_cols <- sort(unique(LucasS2018_sameLU$LC))
 
 summary_table1_1 <- data.frame()
@@ -217,13 +270,84 @@ summary_table1 <- summary_table1 %>%
   mutate(LUCAS_TopSoil_Forests_Shrubland = rowSums(select(summary_table1_1, starts_with("C") | starts_with("D"))))
   
 
+summary_table1
+
+summary_table1 %>%
+  bind_rows(summarise(., across(everything(), sum)))
 
 
-LUCAS_TopSoil_broadleaf
+
+## Total sampled points in LUCAS-Core
+
+conditions1 <- list(
+  function(df) df$NUTS2 %in% c("PT16"),          # condition 1
+  function(df) df$NUTS2 %in% c("ES11"),          # condition 2
+  function(df) df$NUTS2 %in% c("ES30"),          # condition 3
+  function(df) df$NUTS1 %in% c("FRD"),           # condition 4
+  function(df) df$NUTS0 %in% c("NL"),            # condition 5
+  function(df) df$NUTS0 %in% c("FI"),            # condition 6
+  function(df) df$NUTS2 %in% c("DE40"),          # condition 7
+  function(df) df$NUTS0 %in% c("SK"),            # condition 8
+  function(df) df$NUTS0 %in% c("EL"),            # condition 9
+  function(df) df$NUTS2 %in% c("ITI1")           # condition 10
+  
+)
+
+summary_table2 <- LucasC2018 %>%
+  summarise(
+    PT16 = sum(conditions1[[1]](LucasC2018)),
+    ES11 = sum(conditions1[[2]](LucasC2018)),
+    ES30 = sum(conditions1[[3]](LucasC2018)),
+    FRD = sum(conditions1[[4]](LucasC2018)),
+    NL = sum(conditions1[[5]](LucasC2018)),
+    FI = sum(conditions1[[6]](LucasC2018)),
+    DE40 = sum(conditions1[[7]](LucasC2018)),
+    SK = sum(conditions1[[8]](LucasC2018)),
+    EL = sum(conditions1[[9]](LucasC2018)),
+    ITI1 = sum(conditions1[[10]](LucasC2018))
+  ) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  rename("LUCAS_Core" = V1)
+
+summary_table2
+
+desired_cols1 <- sort(unique(LucasC2018$LC1))
+
+summary_table2_1 <- data.frame()
+
+for (i in 1:10) {
+  summary_table2_1_x <- LucasC2018 %>%
+    filter(conditions1[[i]](LucasC2018)) %>%
+    group_by(LC1) %>%
+    count() %>% #as.data.frame()
+    pivot_wider(names_from = LC1, values_from = n) %>% #
+    as.data.frame() %>% #colnames()
+    mutate(!!!setNames(rep(list(0), length(setdiff(desired_cols1, names(.)))), 
+                       setdiff(desired_cols1, names(.)))) %>%
+    select(all_of(desired_cols1)) %>% # Ensure correct column order
+    {row.names(.) <- regions_ordered[i]; .}
+  
+  summary_table2_1 <- rbind(summary_table2_1, summary_table2_1_x)  
+}
+summary_table2_1
+
+#apply(summary_table2_1, 1, sum)  #just to check
+
+
+summary_table1
+summary_table1 <- cbind(summary_table2, summary_table1)
+summary_table1
+
+summary_table1 <- rownames_to_column(summary_table1, var = "Region")
 
 
 
-#
+table_flex <- summary_table1 %>%
+  flextable() %>%
+  set_caption("Table1. Summary of surveyed points in the LUCAS-Core and LUCAS-Topsoil modules in 2018. 'LUCAS_TopSoil_UnchangedLU' (and the subsequent columns, split by forest type) represent the number of points where land use remained unchanged between 2009 and 2018.")
+
+save_as_docx(table_flex, path = "./results/summary_table1.docx")
 
 
 
