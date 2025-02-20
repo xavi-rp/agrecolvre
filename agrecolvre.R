@@ -16,6 +16,11 @@ library(readxl)
 library(flextable) 
 library(officer) 
 library(webshot2)
+library(ggplot2)
+library(ggpmisc)
+library(ggfortify)
+
+
 
 
 setwd("/Users/xavi_rp/Documents/LifeWatchERIC/AgroServ/AgroServ_1stCall_USC")
@@ -352,17 +357,136 @@ save_as_docx(table_flex, path = "./results/summary_table1.docx")
 
 
 
-### step 4: Select LUCAS-soil variables ####
+### step 4: Select LUCAS-soil variables, regions, etc ####
+
+LucasS2018_sameLU
+names(LucasS2018_sameLU)
 
 
+## Selecting region (Galicia --> NUTS_2 == ES11)
+
+LucasS2018_sameLU_reg <- LucasS2018_sameLU %>%
+  filter(NUTS_2 %in% c("ES11")) #%>%  # nrow()  # 102
+  
+LucasS2018_sameLU_reg
+
+## Keeping all the LU together
+sort(unique(LucasS2018_sameLU_reg$LC))  # "B11" "B16" "B55" "B71" "C10" "C22" "C32" "C33" "D10" "D20" "E20"
+
+names(LucasS2018_sameLU_reg)
+
+#LucasS2018_sameLU_reg %>%
+#  select(pH_CaCl2, pH_H2O) %>%
+#  ggplot(aes(x = pH_CaCl2, y = pH_H2O)) + 
+#  geom_point() +  
+#  #geom_abline(slope = 1, intercept = 0) +
+#  geom_smooth(method = "lm", se = TRUE) +  
+#  stat_poly_eq()  +
+#  labs(title = "", x = "pH_CaCl2", y = "pH_H2O")
 
 
+variables_lst <-c("pH_CaCl2", "pH_H2O", "EC", "OC", "CaCO3", "P", "N", "K")
+
+sort(unique(LucasS2018_sameLU_reg$P))
+sort(unique(LucasS2018_sameLU_reg$N))
+sort(unique(LucasS2018_sameLU_reg$K))
+
+LucasS2018_sameLU_reg %>% 
+  select(all_of(variables_lst)) %>%
+  summarise(NAs = sum(is.na(.)),
+            NAs_CaCO3 = sum(is.na(CaCO3)),
+            LOD_P = sum(P == "< LOD", na.rm = TRUE),
+            n = n())
+#  NAs  NAs_CaCO3  LOD_P   n
+#   46         46     44  102
 
 
+range(unique(LucasS2018_sameLU_reg$P), na.rm = TRUE)
 
+## Change below Limits of Detection with NAs
+LucasS2018_sameLU_reg <- LucasS2018_sameLU_reg %>%
+  mutate(P = na_if(P, "< LOD"))
+
+#
 
 
 ### step 5: PCA ####
+
+
+LucasS2018_sameLU_reg_vrbls <- LucasS2018_sameLU_reg %>% 
+  select(all_of(variables_lst)) %>%
+  mutate(across(everything(), as.numeric)) %>%
+  #scale() %>%           # Standardize variables (important for PCA)
+  as_tibble()
+
+LucasS2018_sameLU_reg_vrbls
+
+## Handling missing values
+## Option 1: remove rows with NAs
+pca_result <- prcomp(na.omit(LucasS2018_sameLU_reg_vrbls),   # to remove rows with NAs (remain 29 rows out of 102) --> probably it's too many
+                     center = TRUE, scale. = TRUE)
+summary(pca_result)
+
+
+## Option 2: remove columns with NAs (CaCO3 and P)
+pca_result2 <- prcomp(select(LucasS2018_sameLU_reg_vrbls, -c(CaCO3, P)),   # to remove P and CaCO3
+                      center = TRUE, scale. = TRUE)
+summary(pca_result2)
+
+
+## Convert PCA scores into a dataframe
+pca_scores <- as_tibble(pca_result$x)
+pca_scores2 <- as_tibble(pca_result2$x)
+
+
+## Plotting
+ggplot(pca_scores, aes(x = PC1, y = PC2)) +
+  geom_point(size = 3, alpha = 0.8) +
+  labs(title = "PCA Analysis: PC1 vs PC2",
+       x = "Principal Component 1",
+       y = "Principal Component 2")
+
+## Biplot
+#autoplot(pca_result, 
+#         loadings = TRUE, 
+#         loadings.label = TRUE,
+#         loadings.colour = NA,
+#         geom = "loadings") 
+
+# Extract loadings
+loadings <- as.data.frame(pca_result$rotation)  # Loadings data
+loadings$Variable <- rownames(loadings)  # Add variable names
+
+# Plot only loadings' labels (no scores, no arrows)
+ggplot(loadings, aes(x = PC1, y = PC2, label = Variable)) +
+  geom_point(color = "blue", size = 2) +  # Scatter plot of points
+  geom_text(size = 3, vjust = 2) +  # Show labels only
+  geom_hline(yintercept = 0) +  # Horizontal line
+  geom_vline(xintercept = 0) +  # Vertical line
+  labs(title = "PCA Loadings (Labels Only)")
+
+## Which variable is most strongly associated with each PC.
+loadings1 <- as.data.frame(pca_result$rotation)  # Loadings data
+top_vars <- apply(abs(loadings1), 2, function(x) names(sort(x, decreasing = TRUE)))
+top_vars
+
+top_1var <- apply(abs(loadings1), 2, function(x) names(which.max(x)))
+top_1var
+
+
+### Explained variance
+#explained_var <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+#ggplot(data = tibble(PC = paste0("PC", 1:length(explained_var)), Variance = explained_var), 
+#       aes(x = PC, y = Variance)) +
+#  geom_col(fill = "blue") +
+#  geom_text(aes(label = round(Variance, 2)), vjust = -0.5) +
+#  labs(title = "Scree Plot: Explained Variance per PC",
+#       x = "Principal Components", 
+#       y = "Proportion of Variance Explained")
+
+
+
+
 
 ### step 6: ANOVA ####
 
