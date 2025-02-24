@@ -364,9 +364,10 @@ names(LucasS2018_sameLU)
 
 
 ## Selecting region (Galicia --> NUTS_2 == ES11)
+region_study <- "ES11"
 
 LucasS2018_sameLU_reg <- LucasS2018_sameLU %>%
-  filter(NUTS_2 %in% c("ES11")) #%>%  # nrow()  # 102
+  filter(NUTS_2 %in% region_study) #%>%  # nrow()  # 102
   
 LucasS2018_sameLU_reg
 
@@ -411,7 +412,6 @@ LucasS2018_sameLU_reg <- LucasS2018_sameLU_reg %>%
 
 
 ### step 5: PCA ####
-
 
 LucasS2018_sameLU_reg_vrbls <- LucasS2018_sameLU_reg %>% 
   select(all_of(variables_lst)) %>%
@@ -458,12 +458,14 @@ loadings <- as.data.frame(pca_result$rotation)  # Loadings data
 loadings$Variable <- rownames(loadings)  # Add variable names
 
 # Plot only loadings' labels (no scores, no arrows)
-ggplot(loadings, aes(x = PC1, y = PC2, label = Variable)) +
+pca_plot <- ggplot(loadings, aes(x = PC1, y = PC2, label = Variable)) +
   geom_point(color = "blue", size = 2) +  # Scatter plot of points
   geom_text(size = 3, vjust = 2) +  # Show labels only
   geom_hline(yintercept = 0) +  # Horizontal line
   geom_vline(xintercept = 0) +  # Vertical line
-  labs(title = "PCA Loadings (Labels Only)")
+  labs(title = paste0("Principal Component Analysis - PC1 vs PC2. Region: ", region_study))
+
+pca_plot
 
 ## Which variable is most strongly associated with each PC.
 loadings1 <- as.data.frame(pca_result$rotation)  # Loadings data
@@ -472,6 +474,9 @@ top_vars
 
 top_1var <- apply(abs(loadings1), 2, function(x) names(which.max(x)))
 top_1var
+#     PC1        PC2        PC3        PC4        PC5        PC6        PC7        PC8       
+# "pH_CaCl2"    "EC"       "CaCO3"    "P"        "pH_H2O"   "K"        "N"        "OC"      
+# "pH_H2O"      "N"        "EC"       "EC"       "pH_CaCl2" "EC"       "pH_CaCl2" "pH_CaCl2"
 
 
 ### Explained variance
@@ -485,10 +490,163 @@ top_1var
 #       y = "Proportion of Variance Explained")
 
 
+## saving plots
+ggsave(paste0("./results/pca_plot_", region_study, ".png"), plot = pca_plot, width = 8, height = 6, dpi = 300)
+
 
 
 
 ### step 6: ANOVA ####
+
+names(LucasS2018_sameLU_reg)
+sort(unique(LucasS2018_sameLU_reg$LC_modif_2018))  # "B11" "B16" "B55" "B71" "C10" "C20" "C30" "D10" "D20" "E20"
+sort(unique(LucasS2018_sameLU_reg$LC))  # "B11" "B16" "B55" "B71" "C10" "C22" "C32" "C33" "D10" "D20" "E20"
+
+LucasS2018_sameLU_reg_LC <- LucasS2018_sameLU_reg %>%
+  select(all_of(variables_lst), LC) %>%
+  filter(!str_starts(LC, "B")) %>%      # "C10" "C22" "C32" "C33" "D10" "D20" "E20"
+  mutate(LC_grouped = case_when(
+    LC == "C10" ~ "Broadleaves",     
+    LC == "C21" ~ "Coniferous",     
+    LC == "C22" ~ "Coniferous",     
+    LC == "C23" ~ "Coniferous",     
+    LC == "C31" ~ "Coniferous",     
+    LC == "C32" ~ "Coniferous",     
+    LC == "C33" ~ "Broadleaves",     
+    LC == "D10" ~ "Shrubland",     
+    LC == "D20" ~ "Shrubland",     
+    LC == "E10" ~ "Grassland",     
+    LC == "E20" ~ "Grassland",     
+    LC == "E30" ~ "Grassland",     
+    TRUE ~ LC))  %>%                    # Keep other values unchanged
+  select(-LC)
+
+
+sort(unique(LucasS2018_sameLU_reg_LC$LC_grouped)) 
+nrow(LucasS2018_sameLU_reg_LC)
+LucasS2018_sameLU_reg_LC
+
+LucasS2018_sameLU_reg_LC <- LucasS2018_sameLU_reg_LC %>% #View()
+  mutate_at(variables_lst, as.numeric) #%>% View()
+
+table(LucasS2018_sameLU_reg_LC$LC_grouped)
+# Broadleaves  Coniferous   Grassland   Shrubland 
+#      42          22          17          14 
+
+
+## boxplots
+bxplt_variable_LC <- LucasS2018_sameLU_reg_LC %>% 
+  pivot_longer(cols = variables_lst, names_to = "variable", values_to = "value") %>%
+  ggplot(aes(x = LC_grouped, y = value, fill = LC_grouped)) +
+  geom_boxplot() +
+  facet_wrap(~ variable, scales = "free_y") +  # Facet by variable, allowing different y scales
+  labs(title = "", y = "Value", x = "LC")
+bxplt_variable_LC
+
+## saving boxplots
+ggsave(paste0("./results/bxplt_variable_LC_", region_study, ".png"), plot = bxplt_variable_LC, width = 12, height = 6, dpi = 300)
+
+
+
+## Histograms
+LucasS2018_sameLU_reg_LC %>% 
+  pivot_longer(cols = variables_lst, names_to = "variable", values_to = "value") %>%
+  ggplot(aes(x = value, fill = LC_grouped)) +
+  #ggplot(aes(x = log10(value), fill = LC_grouped)) +
+  geom_histogram(position = "dodge", bins = 5, alpha = 0.7) +  # Adjust the number of bins
+  facet_wrap(~ variable + LC_grouped, scales = "free_x") +  # Facet by variable, allowing different y scales
+  labs(title = "", y = "Value", x = "LC")
+
+# Variables are not normally distributed, in general.
+
+## Quick check of variances
+LucasS2018_sameLU_reg_LC %>%
+  group_by(LC_grouped) %>%  # Replace with your categorical variable
+  summarise_at(variables_lst, var, na.rm = TRUE)
+
+# Rule of thumb: Largest variance should not be more than 4 times the smallest variance.
+# If ratio ≤ 4, variances are similar enough for ANOVA.
+LucasS2018_sameLU_reg_LC %>%
+  group_by(LC_grouped) %>% 
+  summarise_at(variables_lst, var, na.rm = TRUE) %>%
+  summarise_at(variables_lst, ~ max(., na.rm = TRUE) / min(., na.rm = TRUE)) %>%
+  round(digits = 1) %>%
+  data.frame()
+
+#   pH_CaCl2  pH_H2O  EC     OC  CaCO3   P    N    K
+#      2.6    1.5     6.9    2     6.5  14   1.3  15.5
+
+
+### Normality test for residuals (Shapiro-Wilk)
+#normality_results <- lapply(variables_lst, 
+#                            function(var) {
+#                              model <- aov(as.formula(paste(var, "~ LC_grouped")), data = LucasS2018_sameLU_reg_LC)
+#                              shapiro.test(residuals(model))
+#                            })
+#
+### Homogeneity of variances (Levene's test)
+#levene_results <- lapply(variables_lst, 
+#                         function(var) {
+#                           car::leveneTest(as.formula(paste(var, "~ LC_grouped")), data = LucasS2018_sameLU_reg_LC)
+#                         })
+#
+#list(normality_results = normality_results, levene_results = levene_results)
+
+
+## ANOVA
+
+anova_results <- LucasS2018_sameLU_reg_LC %>%
+  pivot_longer(cols = variables_lst, names_to = "Variable", values_to = "Value") %>%
+  group_by(Variable) %>%
+  summarise(ANOVA = list(aov(Value ~ LC_grouped))) %>%
+  mutate(TidyResults = map(ANOVA, broom::tidy)) %>% 
+  unnest(TidyResults) %>%
+  filter(term == "LC_grouped")  # Keep only the main effect
+
+anova_results
+
+
+## Plotting means 
+LucasS2018_sameLU_reg_LC
+variables_lst
+
+# Function to compute ANOVA, Tukey test, means & confidence intervals
+get_tukey_results <- function(var) {
+  formula <- as.formula(paste(var, "~ LC_grouped"))  # Create formula dynamically
+  anova_result <- aov(formula, data = LucasS2018_sameLU_reg_LC)
+  tukey_result <- TukeyHSD(anova_result)
+  
+  # Extract mean and CI
+  summary_stats <- LucasS2018_sameLU_reg_LC %>%
+    group_by(LC_grouped) %>%
+    summarise(
+      mean = mean(.data[[var]], na.rm = TRUE),
+      ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
+      ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
+    ) %>%
+    mutate(variable = var,
+           Tukey = multcompView::multcompLetters4(anova_result, tukey_result)$LC_grouped$Letters)
+  
+  return(summary_stats)
+}
+
+# Apply function to all numeric variables
+tukey_results <- bind_rows(lapply(variables_lst, get_tukey_results))
+
+# plots
+ggplot(tukey_results, aes(x = LC_grouped, y = mean, group = variable)) +
+  geom_point(size = 3) +  # Plot mean points
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +  # Add CI bars
+  geom_text(aes(label = Tukey, y = ci_upper + (ci_upper * 0.155)), size = 5) +  # Tukey letters above CI
+  facet_wrap(~ variable, scales = "free_y") +  # One plot per variable
+  #theme_minimal() +
+  labs(title = "ANOVA Results: Means with 95% CI & Tukey HSD Letters",
+       x = "LC",
+       y = "Mean Value")
+
+
+
+
 
 ### step 7: Visualize and export results  ####
 
