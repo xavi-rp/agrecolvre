@@ -361,13 +361,27 @@ save_as_docx(table_flex, path = "./results/summary_table1.docx")
 
 LucasS2018_sameLU
 names(LucasS2018_sameLU)
+names(LucasS2018)
 
 
 ## Selecting region (Galicia --> NUTS_2 == ES11)
 region_study <- "ES11"
 
-LucasS2018_sameLU_reg <- LucasS2018_sameLU %>%
-  filter(NUTS_2 %in% region_study) #%>%  # nrow()  # 102
+select_same_LU <- "no"
+select_same_LU <- "yes"
+
+if(select_same_LU == "yes"){
+  LucasS2018_sameLU_reg <- LucasS2018_sameLU %>%
+    filter(NUTS_2 %in% region_study) %>%  # nrow()  # 102
+    filter(grepl("^B|^C|^D|^E", LC)) 
+} else if(select_same_LU == "no"){
+  LucasS2018_sameLU_reg <- LucasS2018 %>%
+    filter(NUTS_2 %in% region_study) %>%   #nrow()  # 192
+    filter(grepl("^B|^C|^D|^E", LC)) 
+} else{
+  print("do you want to select only those rows that have the same LU than in 2009?")
+}
+  
   
 LucasS2018_sameLU_reg
 
@@ -633,18 +647,42 @@ get_tukey_results <- function(var) {
 # Apply function to all numeric variables
 tukey_results <- bind_rows(lapply(variables_lst, get_tukey_results))
 
-# plots
-ggplot(tukey_results, aes(x = LC_grouped, y = mean, group = variable)) +
-  geom_point(size = 3) +  # Plot mean points
+# plots 1 (means, CI and Tukey letters)
+anova_means_tukey <- ggplot(tukey_results, aes(x = LC_grouped, y = mean, group = variable)) +
+  #geom_point(size = 3, col = "red") +  # Plot mean points
   geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.2) +  # Add CI bars
+  stat_summary(fun = mean, geom = "point", shape = 21, size = 3, fill = "red"
+               , aes(color = "Mean")) +  # Mean points
   geom_text(aes(label = Tukey, y = ci_upper + (ci_upper * 0.155)), size = 5) +  # Tukey letters above CI
   facet_wrap(~ variable, scales = "free_y") +  # One plot per variable
+  scale_color_manual(name = "", values = c("Mean" = "red")) +
   #theme_minimal() +
-  labs(title = "ANOVA Results: Means with 95% CI & Tukey HSD Letters",
+  labs(title = "ANOVA Results: Means with 95% CI & Tukey test",
        x = "LC",
        y = "Mean Value")
 
+anova_means_tukey
 
+# plots 2 (boxplots and Tukey letters)
+anova_boxplots_tukey <- LucasS2018_sameLU_reg_LC %>% 
+  pivot_longer(cols = variables_lst, names_to = "variable", values_to = "value") %>%
+  ggplot(aes(x = LC_grouped, y = value)) +
+  geom_boxplot() +
+  stat_summary(fun = mean, geom = "point", size = 3, fill = "red"
+               , aes(color = "Mean")
+               ) +  # Mean points
+  scale_color_manual(name = "", values = c("Mean" = "red")) +
+  geom_text(data = tukey_results, aes(x = LC_grouped, y = ci_upper + (ci_upper * 0.5), label = Tukey), size = 5, col = "red", 
+            fontface = "bold",
+            hjust = - 0.05) + # Tukey letters
+  facet_wrap(~ variable, scales = "free_y") +  # Facet by variable, allowing different y scales
+  labs(title = "ANOVA Results: Boxplots, means & Tukey test", y = "Value", x = "LC")
+
+anova_boxplots_tukey
+
+
+ggsave(paste0("./results/anova_means_tukey_", region_study, ".png"), plot = anova_means_tukey, width = 12, height = 6, dpi = 300)
+ggsave(paste0("./results/anova_boxplots_tukey_", region_study, ".png"), plot = anova_boxplots_tukey, width = 12, height = 6, dpi = 300)
 
 
 
