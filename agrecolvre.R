@@ -635,11 +635,14 @@ get_tukey_results <- function(var) {
     group_by(LC_grouped) %>%
     summarise(
       mean = mean(.data[[var]], na.rm = TRUE),
-      ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
-      ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
+      #ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
+      #ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
+      ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.95, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
+      ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.95, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
     ) %>%
     mutate(variable = var,
-           Tukey = multcompView::multcompLetters4(anova_result, tukey_result)$LC_grouped$Letters)
+           Tukey = multcompView::multcompLetters4(anova_result, tukey_result)$LC_grouped$Letters[order(names(multcompView::multcompLetters4(anova_result, tukey_result)$LC_grouped$Letters))]
+           )
   
   return(summary_stats)
 }
