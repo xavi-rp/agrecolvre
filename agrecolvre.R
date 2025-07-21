@@ -1,14 +1,14 @@
 
-##########################################################################
-###                                                                   ####
-###                            AGRECOLVRE                             ####
-###                                                                   ####
-### Improvement of the soil health through agroecological management  ####
-###                                                                   ####
-##########################################################################
+#########################################################################
+###                                                                   ###
+###                            AGRECOLVRE                             ###
+###                                                                   ###
+### Improvement of the soil health through agroecological management  ###
+###                                                                   ###
+#########################################################################
 
 # Rosa's document:
-# /Users/xavi_rp/Documents/LifeWatchERIC/AgroServ/AgroServ_1stCall_USC/Estudi_Reproduir/SUs-SOIL.docx
+# /Users/xavi_rp/Documents/LifeWatchERIC/AgroServ/AgroServ_1stCall_USC/Estudi_Reproduir/SUS-SOIL.docx
 
 
 library(tidyverse)
