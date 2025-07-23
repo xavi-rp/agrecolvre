@@ -285,7 +285,7 @@ pca_plot <- ggplot(loadings, aes(x = PC1, y = PC2, label = Variable)) +
   geom_text(size = 3, vjust = 2) +  # Show labels only
   geom_hline(yintercept = 0) +  # Horizontal line
   geom_vline(xintercept = 0) +  # Vertical line
-  labs(title = paste0("Principal Component Analysis - PC1 vs PC2. Region: ", region_study))
+  labs(title = paste0("Principal Component Analysis - PC1 vs PC2. Region: ", paste(region_study, collapse = ", ")))
 
 pca_plot
 
@@ -305,7 +305,7 @@ explained_df
 
 
 ## saving plots
-ggsave(paste0("./results/pca_plot_", region_study, ".png"), plot = pca_plot, width = 8, height = 6, dpi = 300)
+ggsave(paste0("./results/pca_plot_", paste(region_study, collapse = "_"), ".png"), plot = pca_plot, width = 8, height = 6, dpi = 300)
 
 ## saving results
 wb <- createWorkbook()
@@ -357,7 +357,7 @@ bxplt_variable_LC <- LucasS2018_sameLU_reg_LC %>%
 bxplt_variable_LC
 
 ## saving boxplots
-ggsave(paste0("./results/bxplt_variable_LC_", region_study, ".png"), plot = bxplt_variable_LC, width = 12, height = 6, dpi = 300)
+ggsave(paste0("./results/bxplt_variable_LC_", paste(region_study, collapse = "_"), ".png"), plot = bxplt_variable_LC, width = 12, height = 6, dpi = 300)
 
 
 
@@ -372,7 +372,7 @@ histog_variable_LC <- LucasS2018_sameLU_reg_LC %>%
 histog_variable_LC
 
 ## saving boxplots
-ggsave(paste0("./results/histograms_variable_LC_", region_study, ".png"), plot = histog_variable_LC, width = 12, height = 12, dpi = 300)
+ggsave(paste0("./results/histograms_variable_LC_", paste(region_study, collapse = "_"), ".png"), plot = histog_variable_LC, width = 12, height = 12, dpi = 300)
 
 
 # Variables are not normally distributed, in general.
@@ -481,7 +481,7 @@ anova_means_tukey
 
 ## saving results
 
-ggsave(paste0("./results/anova_means_tukey_", region_study, ".png"), plot = anova_means_tukey, width = 12, height = 6, dpi = 300)
+ggsave(paste0("./results/anova_means_tukey_", paste(region_study, collapse = "_"), ".png"), plot = anova_means_tukey, width = 12, height = 6, dpi = 300)
 
 
 wb <- createWorkbook()
