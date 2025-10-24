@@ -635,10 +635,11 @@ get_tukey_results <- function(var) {
     group_by(LC_grouped) %>%
     summarise(
       mean = mean(.data[[var]], na.rm = TRUE),
-      #ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
-      #ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
-      ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.95, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
-      ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.95, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
+      max = max(.data[[var]], na.rm = TRUE),
+      ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
+      ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.975, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
+      #ci_lower = mean(.data[[var]], na.rm = TRUE) - qt(0.95, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n()),
+      #ci_upper = mean(.data[[var]], na.rm = TRUE) + qt(0.95, df = n() - 1) * sd(.data[[var]], na.rm = TRUE) / sqrt(n())
     ) %>%
     mutate(variable = var,
            Tukey = multcompView::multcompLetters4(anova_result, tukey_result)$LC_grouped$Letters[order(names(multcompView::multcompLetters4(anova_result, tukey_result)$LC_grouped$Letters))]
@@ -670,18 +671,47 @@ anova_means_tukey
 anova_boxplots_tukey <- LucasS2018_sameLU_reg_LC %>% 
   pivot_longer(cols = variables_lst, names_to = "variable", values_to = "value") %>%
   ggplot(aes(x = LC_grouped, y = value)) +
-  geom_boxplot() +
-  stat_summary(fun = mean, geom = "point", size = 3, fill = "red"
-               , aes(color = "Mean")
-               ) +  # Mean points
-  scale_color_manual(name = "", values = c("Mean" = "red")) +
-  geom_text(data = tukey_results, aes(x = LC_grouped, y = ci_upper + (ci_upper * 0.5), label = Tukey), size = 5, col = "red", 
-            fontface = "bold",
-            hjust = - 0.05) + # Tukey letters
+  geom_boxplot(outlier.size = 1) +
+  #geom_jitter(width = 0.2, size = .3, alpha = .5) + # show individual points
+#  stat_summary(fun = mean, geom = "point", size = 3, fill = "red"
+#               , aes(color = "Mean")
+#               ) +  # Mean points
+#  scale_color_manual(name = "", values = c("Mean" = "red")) +
+  geom_text(data = tukey_results, 
+            #aes(x = LC_grouped, y = ci_upper + (ci_upper * 0.5), label = Tukey), 
+            aes(x = LC_grouped, y = (max + (max * 0.1)), label = Tukey), 
+            size = 5, col = "red", 
+            fontface = "bold" #,
+            #hjust = - 0.05
+            ) + # Tukey letters
   facet_wrap(~ variable, scales = "free_y") +  # Facet by variable, allowing different y scales
-  labs(title = "ANOVA Results: Boxplots, means & Tukey test", y = "Value", x = "LC")
+  labs(title = "ANOVA Results: Boxplots & Tukey HSD Letters", y = "Value", x = "LC")
 
 anova_boxplots_tukey
+
+
+# plots 3 (violin and Tukey letters)
+anova_boxplots_tukey_3 <- LucasS2018_sameLU_reg_LC %>% 
+  pivot_longer(cols = variables_lst, names_to = "variable", values_to = "value") %>%
+  ggplot(aes(x = LC_grouped, y = value)) +
+  #geom_boxplot() +
+  geom_violin(trim = FALSE, alpha = 0.8) + 
+  geom_jitter(width = 0.2, size = .3, alpha = .5) + # show individual points
+#  stat_summary(fun = mean, geom = "point", size = 3, fill = "red"
+#               , aes(color = "Mean")
+#               ) +  # Mean points
+#  scale_color_manual(name = "", values = c("Mean" = "red")) +
+  geom_text(data = tukey_results, 
+            #aes(x = LC_grouped, y = ci_upper + (ci_upper * 0.5), label = Tukey), 
+            aes(x = LC_grouped, y = (max + (max * 0.5)), label = Tukey), 
+            size = 5, col = "red", 
+            fontface = "bold",
+            #hjust = - 0.05
+            ) + # Tukey letters
+  facet_wrap(~ variable, scales = "free_y") +  # Facet by variable, allowing different y scales
+  labs(title = "ANOVA Results: Violinplot, means & Tukey test", y = "Value", x = "LC")
+
+anova_boxplots_tukey_3
 
 
 ggsave(paste0("./results/anova_means_tukey_", region_study, ".png"), plot = anova_means_tukey, width = 12, height = 6, dpi = 300)
