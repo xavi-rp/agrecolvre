@@ -1,0 +1,14 @@
+{
+  "parameters": [
+    {
+      "name": "region_study",
+      "defaultValue": "ES11",
+      "value": "ES11"
+    },
+    {
+      "name": "variables_lst",
+      "defaultValue": "pH_CaCl2,pH_H2O,EC,OC,CaCO3,P,N,K",
+      "value": "pH_CaCl2,pH_H2O,EC,OC,CaCO3,P,N,K"
+    }
+  ]
+}

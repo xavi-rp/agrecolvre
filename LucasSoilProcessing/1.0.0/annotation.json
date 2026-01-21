@@ -1,0 +1,84 @@
+{
+  "name": "LucasSoilProcessing",
+  "label": "LUCAS-Soil Processing",
+  "description": "Within the SUS-SOIL and AGROSERV, the service AGRECOLVRE lays the foundation for the Soil Health VRE within the LifeWatch ERIC infrastructure, tailored to support research in agroecology and soil carbon dynamics, among others. The VRE will provide an integrated, user-oriented digital workspace for researchers and policy-makers to access, harmonise, visualise and analyse soil-related datasets, such as LUCAS and SUS-SOIL. To develop, implement and validate the VRE’s capabilities, a case study on the carbon storage potential of soils across different land use types (forestlands, shrublands and grasslands) will be conducted. This study will use the available EU-wide LUCAS datasets to test data integration, workflow design, and numerical and visual outputs. The LUCAS-Soil Processing wrapper cleans the LUCAS soil datasets for 2009 and 2018, and selects the points that mantains the same LU across this period.",
+  "type": "DataProcessing",
+  "dockerImage": "lucas-soil-processing",
+  "parameters": [
+    {
+      "name": "regions_ordered",
+      "label": "Regions Ordered",
+      "description": "Comma-separated list of regions to be included for LUCAS points comparison, in the order you want them to appear. It can be NUTS0/1/2/3.",
+      "defaultValue": "PT16,ES11,ES30,FRD,NL,FI,DE40,SK,EL,ITI1",
+      "type": "String"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "LUCAS-SOIL-2018.csv",
+      "type": "TabularDataSet",
+      "label": "LUCAS-SOIL-2018.csv",
+      "path": "/mnt/inputs/LUCAS-SOIL-2018.csv",
+      "description": "LUCAS-soil data for 2018."
+    },
+    {
+      "name": "LUCAS_TOPSOIL_v1.xlsx",
+      "type": "TabularDataSet",
+      "label": "LUCAS_TOPSOIL_v1.xlsx",
+      "path": "/mnt/inputs/LUCAS_TOPSOIL_v1.xlsx",
+      "description": "LUCAS-soil data for 2009."
+    },
+    {
+      "name": "EU_2009_20200213.CSV.csv",
+      "type": "TabularDataSet",
+      "label": "EU_2009_20200213.CSV.csv",
+      "path": "/mnt/inputs/EU_2009_20200213.CSV.csv",
+      "description": "LUCAS-core data for 2009."
+    },
+    {
+      "name": "EU_2018_20200213.csv",
+      "type": "TabularDataSet",
+      "label": "EU_2018_20200213.csv",
+      "path": "/mnt/inputs/EU_2018_20200213.csv",
+      "description": "LUCAS-core data for 2018."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "summary_table1.docx",
+      "type": "Text",
+      "path": "/mnt/outputs/summary_table1.docx",
+      "label": "summary_table1.docx",
+      "description": "A table that summarises the number of LUCAS points per each category (region and LU)."
+    },
+    {
+      "name": "LucasS2018_sameLU.csv",
+      "type": "Text",
+      "path": "/mnt/outputs/LucasS2018_sameLU.csv",
+      "label": "LucasS2018_sameLU.csv",
+      "description": "A csv file with the LUCAS-Soil-2018 points that have the same LU than in 2009"
+    }
+  ],
+  "resources": {
+    "cores": 2,
+    "memory": 512,
+    "gpuNeeded": false,
+    "gpuMemory": 1024,
+    "estimatedTime": 1
+  },
+  "tags": [ "soils",  
+            "LUCAS",
+            "Data processing"],
+  "license": "GPL v3",
+  "version": "1.0.0",
+  "dependencies": [],
+  "publicationDate": "Thursday, 23 October 2025",
+  "author": "LifeWatch ERIC",
+  "bugs": {
+    "email": "Xavier.rotllan@lifewatch.eu",
+    "url": "https://helpdesk.lifewatch.eu/"
+  },
+  "citation": null,
+  "testPath": "translateUnitTest.sh",
+  "metaDataCatalogueUrl": "https://metadatacatalogue.lifewatch.eu/srv/eng/catalog.search#/metadata/cfa5a24b-5912-48af-8244-bdf301d77b41"
+}

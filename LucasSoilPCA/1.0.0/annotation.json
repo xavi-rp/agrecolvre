@@ -1,0 +1,70 @@
+{
+  "name": "LucasSoilPCA",
+  "label": "LUCAS-Soil PCA",
+  "description": "Within the SUS-SOIL and AGROSERV, this service (AGRECOLVRE) lays the foundation for the Soil Health VRE within the LifeWatch ERIC infrastructure, tailored to support research in agroecology and soil carbon dynamics, among others. The VRE will provide an integrated, user-oriented digital workspace for researchers and policy-makers to access, harmonise, visualise and analyse soil-related datasets, such as LUCAS and SUS-SOIL. To develop, implement and validate the VRE’s capabilities, a case study on the carbon storage potential of soils across different land use types (forestlands, shrublands and grasslands) will be conducted. This study will use the available EU-wide LUCAS datasets to test data integration, workflow design, and numerical and visual outputs. The LUCAS-Soil PCA wrapper runs a Principal Components Analysis (PCA) on the provided soil dataset (see the README for dataset structure requirements).",
+  "type": "DataAnalysing",
+  "dockerImage": "lucas-soil-pca",
+  "parameters": [
+    {
+      "name": "region_study",
+      "label": "Region Study",
+      "description": "Region for focused study. It can be NUTS0/1/2/3.",
+      "defaultValue": "ES11",
+      "type": "String"
+    },
+    {
+      "name": "variables_lst",
+      "label": "Variables List",
+      "description": "Comma-separated list of soil variables to analyse (e.g., pH_CaCl2,pH_H2O,EC,OC,CaCO3,P,N,K).",
+      "defaultValue": "pH_CaCl2,pH_H2O,EC,OC,CaCO3,P,N,K",
+      "type": "String"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "lucas_data.csv",
+      "type": "TabularDataSet",
+      "label": "LUCAS-like soil data CSV",
+      "path": "/mnt/inputs/lucas_data.csv",
+      "description": "LUCAS-like soil data in CSV."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "pca_plot.png ",
+      "type": "Image",
+      "path": "/mnt/outputs/pca_plot.png",
+      "label": "pca_plot.png",
+      "description": "A PCA plot showing PC1 vs PC2."
+    },
+    {
+      "name": "pca_summary.xlsx",
+      "type": "TabularDataSet",
+      "path": "/mnt/outputs/pca_summary.xlsx",
+      "label": "pca_summary.xlsx",
+      "description": "An Excel file summarising the main results of the PCA."
+    }
+  ],
+  "resources": {
+    "cores": 2,
+    "memory": 512,
+    "gpuNeeded": false,
+    "gpuMemory": 1024,
+    "estimatedTime": 1
+  },
+  "tags": [ "soils",  
+            "LUCAS",
+            "Data analysis"],
+  "license": "GPL v3",
+  "version": "1.0.0",
+  "dependencies": [],
+  "publicationDate": "Thursday, 23 October 2025",
+  "author": "LifeWatch ERIC",
+  "bugs": {
+    "email": "Xavier.rotllan@lifewatch.eu",
+    "url": "https://helpdesk.lifewatch.eu/"
+  },
+  "citation": null,
+  "testPath": "translateUnitTest.sh",
+  "metaDataCatalogueUrl": "https://metadatacatalogue.lifewatch.eu/srv/eng/catalog.search#/metadata/cfa5a24b-5912-48af-8244-bdf301d77b41"
+}

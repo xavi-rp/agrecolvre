@@ -1,0 +1,9 @@
+{
+  "parameters": [
+    {
+      "name": "regions_ordered",
+      "defaultValue": "PT16,ES11,ES30,FRD,NL,FI,DE40,SK,EL,ITI1",
+      "value": "PT16,ES11,ES30,FRD,NL,FI,DE40,SK,EL,ITI1"
+    }
+  ]
+}
